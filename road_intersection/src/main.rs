@@ -1,11 +1,13 @@
+use ::rand::{Rng, thread_rng};
 use macroquad::prelude::*;
-use ::rand::{thread_rng, Rng};
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum LightState {
     Red,
     Green,
 }
+
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum Direction {
     North,
     West,
@@ -14,12 +16,12 @@ enum Direction {
 }
 
 impl Direction {
-    fn str_drection(&self)-> &str{
+    fn str_drection(&self) -> &str {
         match self {
             Direction::East => "East",
-            Direction::North=>"North",
-            Direction::South=>"South",
-            _=>"West"
+            Direction::North => "North",
+            Direction::South => "South",
+            _ => "West",
         }
     }
 }
@@ -50,7 +52,6 @@ impl TrafficLight {
         };
         draw_rectangle(self.pos.x, self.pos.y, size.x, size.y, color);
     }
-
 }
 
 struct Car {
@@ -77,7 +78,7 @@ impl CarColor {
         }
     }
 
-     fn color(&self) -> Color {
+    fn color(&self) -> Color {
         match self {
             CarColor::Yellow => YELLOW,
             CarColor::Blue => BLUE,
@@ -90,19 +91,63 @@ impl Car {
     fn new(start_direction: Direction, start_pos: Vec2) -> Self {
         Car {
             start_direction,
-            end_direction :Direction::East,
+            end_direction: Direction::East,
             color: CarColor::random(),
             position: start_pos,
             speed: 2.0,
         }
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, center_x: f32, center_y: f32, lights: &Vec<TrafficLight>) {
         match self.start_direction {
-            Direction::North => self.position.y += self.speed,
-            Direction::South => self.position.y -= self.speed,
-            Direction::East => self.position.x += self.speed,
-            Direction::West => self.position.x -= self.speed,
+            Direction::North => {
+                let next_step = self.position.y + self.speed + 88.0;
+                for light in lights {
+                    if next_step == center_y
+                        && light.direction == Direction::North
+                        && light.state == LightState::Red
+                    {
+                        return;
+                    }
+                }
+                self.position.y += self.speed;
+            }
+            Direction::South => {
+                let next_step = self.position.y - self.speed - 60.0;
+                for light in lights {
+                    if next_step == center_y
+                        && light.direction == Direction::South
+                        && light.state == LightState::Red
+                    {
+                        return;
+                    }
+                }
+                self.position.y -= self.speed;
+            }
+            Direction::East => {
+                let next_step = self.position.x + self.speed + 88.0;
+                for light in lights {
+                    if next_step == center_x
+                        && light.direction == Direction::East
+                        && light.state == LightState::Red
+                    {
+                        return;
+                    }
+                }
+                self.position.x += self.speed;
+            }
+            Direction::West => {
+                let next_step = self.position.x - self.speed - 60.0;
+                for light in lights {
+                    if next_step == center_x
+                        && light.direction == Direction::West
+                        && light.state == LightState::Red
+                    {
+                        return;
+                    }
+                }
+                self.position.x -= self.speed;
+            }
         }
     }
     // fn CanMove(&self , dr : &Direction )-> bool{
@@ -110,7 +155,13 @@ impl Car {
     // }
 
     fn draw(&self, size: Vec2) {
-        draw_rectangle(self.position.x, self.position.y, size.x, size.y, self.color.color());
+        draw_rectangle(
+            self.position.x,
+            self.position.y,
+            size.x,
+            size.y,
+            self.color.color(),
+        );
     }
 }
 
@@ -125,53 +176,95 @@ async fn main() {
     let light_size = vec2(50.0, 50.0);
     let car_size = vec2(30.0, 30.0);
 
-    let mut lights = vec![
-        TrafficLight::new(vec2(center_x - lane_space - 50., center_y - 50. - 60.0), Direction::North),
-        TrafficLight::new(vec2(center_x + lane_space, center_y - lane_space - 50.0), Direction::West),
-        TrafficLight::new(vec2(center_x + lane_space, center_y + lane_space), Direction::South),
-        TrafficLight::new(vec2(center_x - lane_space - 50., center_y + lane_space), Direction::East),
+    let mut lights: Vec<TrafficLight> = vec![
+        TrafficLight::new(
+            vec2(center_x - lane_space - 50.0, center_y - 50.0 - 60.0),
+            Direction::North,
+        ),
+        TrafficLight::new(
+            vec2(center_x + lane_space, center_y - lane_space - 50.0),
+            Direction::West,
+        ),
+        TrafficLight::new(
+            vec2(center_x + lane_space, center_y + lane_space),
+            Direction::South,
+        ),
+        TrafficLight::new(
+            vec2(center_x - lane_space - 50.0, center_y + lane_space),
+            Direction::East,
+        ),
     ];
 
     let mut cars: Vec<Car> = Vec::new();
-    let mut current_green = 0;
-    let green_duration = 3.0;
-    let mut timer = 0.0;
-    let mut click = 0.0 ;
+    let mut current_green: usize = 0;
+    let green_duration: f64 = 3.0;
+    let mut timer: f64 = 0.0;
+    let mut click: f64 = 0.0;
 
     loop {
         clear_background(BLACK);
 
         draw_line(center_x, 0.0, center_x, height_screen, 2.0, WHITE);
-        draw_line(center_x - lane_space, 0.0, center_x - lane_space, height_screen, 1.0, GRAY);
-        draw_line(center_x + lane_space, 0.0, center_x + lane_space, height_screen, 1.0, GRAY);
+        draw_line(
+            center_x - lane_space,
+            0.0,
+            center_x - lane_space,
+            height_screen,
+            1.0,
+            GRAY,
+        );
+        draw_line(
+            center_x + lane_space,
+            0.0,
+            center_x + lane_space,
+            height_screen,
+            1.0,
+            GRAY,
+        );
 
         draw_line(0.0, center_y, width_screen, center_y, 2.0, WHITE);
-        draw_line(0.0, center_y - lane_space, width_screen, center_y - lane_space, 1.0, GRAY);
-        draw_line(0.0, center_y + lane_space, width_screen, center_y + lane_space, 1.0, GRAY);
+        draw_line(
+            0.0,
+            center_y - lane_space,
+            width_screen,
+            center_y - lane_space,
+            1.0,
+            GRAY,
+        );
+        draw_line(
+            0.0,
+            center_y + lane_space,
+            width_screen,
+            center_y + lane_space,
+            1.0,
+            GRAY,
+        );
 
-       if click >= 0.40 {
-        if is_key_pressed(KeyCode::Up) {
-            click = 0.0 ;
-            // println!("up");
-            cars.push(Car::new(Direction::South, vec2(center_x , height_screen)));
+        if click >= 0.4 {
+            if is_key_pressed(KeyCode::Up) {
+                click = 0.0;
+                // println!("up");
+                cars.push(Car::new(Direction::South, vec2(center_x, height_screen)));
+            }
+            if is_key_pressed(KeyCode::Down) {
+                click = 0.0;
+                //  println!("Down");
+                cars.push(Car::new(Direction::North, vec2(center_x - lane_space, 0.0)));
+            }
+            if is_key_pressed(KeyCode::Left) {
+                click = 0.0;
+                //  println!("Left");
+                cars.push(Car::new(Direction::East, vec2(0.0, center_y)));
+            }
+            if is_key_pressed(KeyCode::Right) {
+                click = 0.0;
+                //  println!("Right");
+                cars.push(Car::new(
+                    Direction::West,
+                    vec2(width_screen, center_y - lane_space),
+                ));
+            }
         }
-        if is_key_pressed(KeyCode::Down) {
-            click = 0.0 ;
-            //  println!("Down");
-              cars.push(Car::new(Direction::North, vec2(center_x - lane_space, 0.0)));
-        }
-        if is_key_pressed(KeyCode::Left) {
-            click = 0.0 ;
-            //  println!("Left");
-            cars.push(Car::new(Direction::East, vec2(0.0, center_y )));
-        }
-        if is_key_pressed(KeyCode::Right) {
-            click = 0.0 ;
-            //  println!("Right");
-            cars.push(Car::new(Direction::West, vec2(width_screen, center_y - lane_space)));
-        }
-        
-    }
 
         let dt = 0.02;
         click += dt;
@@ -199,10 +292,9 @@ async fn main() {
         // }
         for car in cars.iter_mut() {
             // if car.start_direction.str_drection() == canmove {
-                   car.update();
-                car.draw(car_size);
+            car.update(center_x, center_y, &lights);
+            car.draw(car_size);
             // }
-         
         }
 
         next_frame().await;
