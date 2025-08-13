@@ -7,7 +7,7 @@ enum LightState {
     Green,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Direction {
     North,
     West,
@@ -62,6 +62,7 @@ struct Car {
     speed: f32,
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum CarColor {
     Yellow,
     Blue,
@@ -89,16 +90,99 @@ impl CarColor {
 
 impl Car {
     fn new(start_direction: Direction, start_pos: Vec2) -> Self {
+        let color = CarColor::random();
+        let end_direction = match color {
+            CarColor::Blue => start_direction,
+            CarColor::Purple => match start_direction {
+                Direction::East => Direction::North,
+                Direction::North => Direction::West,
+                Direction::West => Direction::South,
+                Direction::South => Direction::East,
+            },
+            CarColor::Yellow => match start_direction {
+                Direction::North => Direction::East,
+                Direction::East => Direction::South,
+                Direction::South => Direction::West,
+                Direction::West => Direction::North,
+            },
+        };
         Car {
             start_direction,
-            end_direction: Direction::East,
-            color: CarColor::random(),
+            end_direction,
+            color,
             position: start_pos,
             speed: 2.0,
         }
     }
 
     fn update(&mut self, center_x: f32, center_y: f32, lights: &Vec<TrafficLight>) {
+        // east 
+        if self.position.x >= center_x
+            && self.position.y == center_y
+            && Direction::East == self.start_direction
+            && self.color == CarColor::Yellow
+        {
+            self.start_direction = self.end_direction;
+        }
+
+        if self.position.x + 30.0 >= center_x
+            && self.position.y >= center_y
+            && Direction::East == self.start_direction
+            && self.color == CarColor::Purple
+        {
+            self.start_direction = self.end_direction;
+        }
+
+        // west
+        if self.position.x <= center_x
+            && self.position.y == center_y
+            && Direction::West == self.start_direction
+            && self.color == CarColor::Yellow
+        {
+            self.start_direction = self.end_direction;
+        }
+
+        if self.position.x - 30.0 <= center_x
+            && self.position.y >= center_y
+            && Direction::West == self.start_direction
+            && self.color == CarColor::Purple
+        {
+            self.start_direction = self.end_direction;
+        }
+
+        // 
+        // if self.position.x >= center_x
+        //     && self.position.y == center_y
+        //     && Direction::East == self.start_direction
+        //     && self.color == CarColor::Yellow
+        // {
+        //     self.start_direction = self.end_direction;
+        // }
+
+        // if self.position.x + 30.0 >= center_x
+        //     && self.position.y >= center_y
+        //     && Direction::East == self.start_direction
+        //     && self.color == CarColor::Purple
+        // {
+        //     self.start_direction = self.end_direction;
+        // }
+
+        // if self.position.x >= center_x
+        //     && self.position.y == center_y
+        //     && Direction::East == self.start_direction
+        //     && self.color == CarColor::Yellow
+        // {
+        //     self.start_direction = self.end_direction;
+        // }
+
+        // if self.position.x + 30.0 >= center_x
+        //     && self.position.y >= center_y
+        //     && Direction::East == self.start_direction
+        //     && self.color == CarColor::Purple
+        // {
+        //     self.start_direction = self.end_direction;
+        // }
+
         match self.start_direction {
             Direction::North => {
                 let next_step = self.position.y + self.speed + 88.0;
@@ -202,7 +286,7 @@ async fn main() {
     let mut click: f64 = 0.0;
 
     loop {
-        clear_background(BLACK);
+        // clear_background(BLACK);
 
         draw_line(center_x, 0.0, center_x, height_screen, 2.0, WHITE);
         draw_line(
@@ -249,7 +333,7 @@ async fn main() {
             if is_key_pressed(KeyCode::Down) {
                 click = 0.0;
                 //  println!("Down");
-                cars.push(Car::new(Direction::North, vec2(center_x - lane_space, 0.0)));
+                cars.push(Car::new(Direction::North, vec2(center_x - 30.0, 0.0)));
             }
             if is_key_pressed(KeyCode::Left) {
                 click = 0.0;
@@ -261,7 +345,7 @@ async fn main() {
                 //  println!("Right");
                 cars.push(Car::new(
                     Direction::West,
-                    vec2(width_screen, center_y - lane_space),
+                    vec2(width_screen, center_y - 30.0),
                 ));
             }
         }
@@ -273,6 +357,7 @@ async fn main() {
             lights[current_green].set_state(LightState::Red);
             current_green = (current_green + 1) % lights.len();
             lights[current_green].set_state(LightState::Green);
+            // lights[1].set_state(LightState::Green);
             timer = 0.0;
         }
 
