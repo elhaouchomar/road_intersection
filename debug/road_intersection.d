@@ -1,0 +1,1 @@
+/home/rotrrwx/Desktop/road_intersection/road_intersection/target/debug/road_intersection: /home/rotrrwx/Desktop/road_intersection/road_intersection/src/car.rs /home/rotrrwx/Desktop/road_intersection/road_intersection/src/main.rs /home/rotrrwx/Desktop/road_intersection/road_intersection/src/traffic_light.rs /home/rotrrwx/Desktop/road_intersection/road_intersection/src/utils.rs
