@@ -116,7 +116,7 @@ impl Car {
     }
 
     fn update(&mut self, center_x: f32, center_y: f32, lights: &Vec<TrafficLight>) {
-        // east 
+        // east
         if self.position.x >= center_x
             && self.position.y == center_y
             && Direction::East == self.start_direction
@@ -134,54 +134,55 @@ impl Car {
         }
 
         // west
-        if self.position.x <= center_x
-            && self.position.y == center_y
+        if self.position.x + 30.0 <= center_x
+            && self.position.y == center_y - 30.0
             && Direction::West == self.start_direction
             && self.color == CarColor::Yellow
         {
             self.start_direction = self.end_direction;
         }
 
-        if self.position.x - 30.0 <= center_x
-            && self.position.y >= center_y
+        if self.position.x <= center_x
+            && self.position.y >= center_y - 30.0
             && Direction::West == self.start_direction
             && self.color == CarColor::Purple
         {
             self.start_direction = self.end_direction;
         }
 
-        // 
-        // if self.position.x >= center_x
-        //     && self.position.y == center_y
-        //     && Direction::East == self.start_direction
-        //     && self.color == CarColor::Yellow
-        // {
-        //     self.start_direction = self.end_direction;
-        // }
+        // South
+        if self.position.y + 30.0 <= center_y
+            && self.position.x + 30.0 >= center_x
+            && Direction::South == self.start_direction
+            && self.color == CarColor::Yellow
+        {
+            self.start_direction = self.end_direction;
+        }
 
-        // if self.position.x + 30.0 >= center_x
-        //     && self.position.y >= center_y
-        //     && Direction::East == self.start_direction
-        //     && self.color == CarColor::Purple
-        // {
-        //     self.start_direction = self.end_direction;
-        // }
+        if self.position.y <= center_y
+            && self.position.x == center_x
+            && Direction::South == self.start_direction
+            && self.color == CarColor::Purple
+        {
+            self.start_direction = self.end_direction;
+        }
 
-        // if self.position.x >= center_x
-        //     && self.position.y == center_y
-        //     && Direction::East == self.start_direction
-        //     && self.color == CarColor::Yellow
-        // {
-        //     self.start_direction = self.end_direction;
-        // }
+        // North
+        if self.position.y >= center_y
+            && self.position.x + 30.0 == center_x
+            && Direction::North == self.start_direction
+            && self.color == CarColor::Yellow
+        {
+            self.start_direction = self.end_direction;
+        }
 
-        // if self.position.x + 30.0 >= center_x
-        //     && self.position.y >= center_y
-        //     && Direction::East == self.start_direction
-        //     && self.color == CarColor::Purple
-        // {
-        //     self.start_direction = self.end_direction;
-        // }
+        if self.position.y + 30.0 >= center_y
+            && self.position.x + 30.0 >= center_x
+            && Direction::North == self.start_direction
+            && self.color == CarColor::Purple
+        {
+            self.start_direction = self.end_direction;
+        }
 
         match self.start_direction {
             Direction::North => {
@@ -357,7 +358,7 @@ async fn main() {
             lights[current_green].set_state(LightState::Red);
             current_green = (current_green + 1) % lights.len();
             lights[current_green].set_state(LightState::Green);
-            // lights[1].set_state(LightState::Green);
+            // lights[0].set_state(LightState::Green);
             timer = 0.0;
         }
 
